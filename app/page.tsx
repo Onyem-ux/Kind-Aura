@@ -765,7 +765,7 @@ function PageContent() {
       .family img {
         width: 100%;
         height: auto;            /* lets aspect-ratio control the height */
-        aspect-ratio: 1 / .66;   /* was 1 / .74 */
+        aspect-ratio: 1 / 1.1;   /* was 1 / .74 */
         object-position: center 30%;
         object-fit: cover;
         border-radius: 20px;
