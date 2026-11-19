@@ -37,6 +37,7 @@ const REVEAL: [string, number, number][] = [
   [".services h2", 0, 0],
   [".services .lead", 0.08, 0],
   [".services .card", 0.12, 0.1],
+  [".services .more", 0.1, 0],
   [".serve h2", 0, 0],
   [".serve .lead", 0.08, 0],
   [".serve .tabs", 0.16, 0],
@@ -84,8 +85,40 @@ function useReveal() {
   }, []);
 }
 
+// Respite care and Transportation are hidden here. To remove them for good,
+// delete those two entries from the `services` array in lib/content and this filter can go.
+const visibleServices = services.filter(
+  (s) => !/respite|transportation/i.test(s.title)
+);
+
+const MENU_LINKS: [string, string][] = [
+  ["About", "#about"],
+  ["Services", "#services"],
+  ["Who we serve", "#serve"],
+  ["Where we serve", "#where"],
+  ["Contact", "#contact"],
+];
+
 function PageContent() {
   useReveal();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
+
+  // Mobile menu: lock page scroll, close on Escape, close if the screen grows to desktop width
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMenuOpen(false);
+    const onResize = () => window.innerWidth > 900 && setMenuOpen(false);
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [menuOpen]);
+
   return (
     <>
       <style jsx global>{`
@@ -164,6 +197,12 @@ function PageContent() {
         backdrop-filter: blur(8px);
         border-bottom: 1px solid var(--line);
       }
+      /* While the mobile menu is open the header sits above it, so the hamburger can turn into the close X */
+      header.menu-open {
+        z-index: 50;
+        background: #fff;
+        backdrop-filter: none;
+      }
       .nav {
         display: flex;
         align-items: center;
@@ -185,7 +224,7 @@ function PageContent() {
       }
       .nav nav a:not(.btn) {
         font-family: var(--sans);
-        font-size: 17px;
+        font-size: 15px;
         font-weight: 500;
         line-height: 1.7;
         letter-spacing: normal;
@@ -216,6 +255,100 @@ function PageContent() {
       }
       .nav .btn:hover {
         background: var(--teal);
+      }
+      /* Hamburger button (phones and small tablets only) */
+      .menu-btn {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 12px;
+        background: transparent;
+        cursor: pointer;
+      }
+      .menu-btn span {
+        display: block;
+        width: 24px;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--teal);
+        transition: transform .35s var(--ease), opacity .2s ease;
+      }
+      /* Open state: top and bottom lines cross into an X, middle line fades out */
+      .menu-btn[aria-expanded="true"] span:nth-child(1) {
+        transform: translateY(7px) rotate(45deg);
+      }
+      .menu-btn[aria-expanded="true"] span:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(.2);
+      }
+      .menu-btn[aria-expanded="true"] span:nth-child(3) {
+        transform: translateY(-7px) rotate(-45deg);
+      }
+      /* Full-screen mobile menu (white background) */
+      .menu {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        flex-direction: column;
+        overflow-y: auto;
+        background: #fff;
+      }
+      .menu ul {
+        list-style: none;
+        flex: 1;
+        margin: 0;
+        padding: 120px 24px 0;
+      }
+      .menu li a {
+        display: block;
+        padding: 18px 0;
+        font-family: var(--sans);
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.2px;
+        line-height: 1.1;
+        color: #000;
+        text-decoration: none;
+      }
+      .menu li a:hover {
+        color: var(--teal);
+      }
+      .menu .menu-cta {
+        display: block;
+        margin: 28px 24px 36px;
+        padding: 16px 30px;
+        border-radius: 999px;
+        background: var(--deep);
+        font-family: var(--sans);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: normal;
+        color: #fff;
+        text-align: center;
+        text-decoration: none;
+      }
+      .menu .menu-cta:hover {
+        background: var(--teal);
+      }
+      @keyframes menuIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .menu.open {
+        animation: menuIn .2s ease both;
+      }
+      /* Links and call button fade up one after another each time the menu opens */
+      .menu.open li,
+      .menu.open .menu-cta {
+        animation: fadeUp .6s var(--ease) both;
+        animation-delay: calc(.12s + var(--i, 0) * .07s);
       }
       /* ==========================================================================
          4. HERO  (full-width photo with text on top)
@@ -261,12 +394,7 @@ function PageContent() {
 
         margin-bottom: 22px;
       }
-      .hero h1 em {
-        font-family: var(--sans);
-        font-style: italic;
-        font-weight: 400;
-        letter-spacing: -0.035em;
-      }
+      
       .hero p {
         font-family: var(--sans);
         font-size: 17px;
@@ -327,7 +455,7 @@ function PageContent() {
       }
       .mission blockquote {
         font-family: var(--serif);
-        font-size: clamp(1.7rem,3vw,2.2rem);
+        font-size: clamp(1.5rem,2.6vw,1.9rem);
         font-weight: 500;
         line-height: 1.3;
         letter-spacing: normal;
@@ -401,7 +529,7 @@ function PageContent() {
       }
       .services .cards {
         display: grid;
-        grid-template-columns: repeat(4,1fr);
+        grid-template-columns: repeat(2,1fr);
         gap: 22px;
         margin-top: 40px;
       }
@@ -417,12 +545,7 @@ function PageContent() {
       .services .card:nth-child(2) {
         border-color: var(--amber);
       }
-      .services .card:nth-child(3) {
-        border-color: var(--sage);
-      }
-      .services .card:nth-child(4) {
-        border-color: var(--navy);
-      }
+      
       .services .card svg {
         width: 30px;
         height: 30px;
@@ -460,6 +583,43 @@ function PageContent() {
         line-height: 1.7;
         letter-spacing: normal;
         color: var(--text);
+      }
+      /* Call to action under the service cards */
+      .services .more {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px 32px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding-top: 28px;
+        border-top: 1px solid var(--line);
+      }
+      .services .more p {
+        font-family: var(--sans);
+        font-size: 1.1rem;
+        font-weight: 400;
+        line-height: 1.6;
+        letter-spacing: normal;
+        color: #44595e;
+        max-width: 52ch;
+      }
+      .services .more .btn {
+        font-family: var(--sans);
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: normal;
+        letter-spacing: normal;
+        color: #fff;
+        display: inline-block;
+        padding: 15px 30px;
+        border-radius: 999px;
+        background: var(--deep);
+        text-decoration: none;
+        transition: background .2s;
+      }
+      .services .more .btn:hover {
+        background: var(--teal);
       }
       /* ==========================================================================
          7. WHO WE SERVE  (tabs and panels)
@@ -604,7 +764,9 @@ function PageContent() {
       }
       .family img {
         width: 100%;
-        aspect-ratio: 1 / .82;
+        height: auto;            /* lets aspect-ratio control the height */
+        aspect-ratio: 1 / .66;   /* was 1 / .74 */
+        object-position: center 30%;
         object-fit: cover;
         border-radius: 20px;
       }
@@ -1026,8 +1188,14 @@ function PageContent() {
         .hero h1,
         .hero p,
         .hero .cta,
-        .serve .panel {
+        .serve .panel,
+        .menu.open,
+        .menu.open li,
+        .menu.open .menu-cta {
           animation: none;
+        }
+        .menu-btn span {
+          transition: none;
         }
         .reveal {
           opacity: 1;
@@ -1069,6 +1237,15 @@ function PageContent() {
           display: none;
         }
         /* only the Contact button stays in the header */
+        .nav nav {
+          gap: 12px;
+        }
+        .menu-btn {
+          display: inline-flex;
+        }
+        .menu.open {
+          display: flex;
+        }
       }
       /* Tablet portrait: up to 860px */
       @media (max-width:860px) {
@@ -1083,6 +1260,9 @@ function PageContent() {
         }
         .hero .overlay {
           background: rgba(11,47,58,.78);
+        }
+        .family img {
+          aspect-ratio: 1 / .5;
         }
 
         .mission .wrap {
@@ -1125,10 +1305,17 @@ function PageContent() {
         .area .chips .cta-link {
           padding: 38px 13px 14px;
         }
+        .family img {
+          aspect-ratio: 1 / 1.5;
+        }
+        .services .more .btn {
+          width: 100%;
+          text-align: center;
+        }
       }
       `}</style>
 
-      <header>
+      <header className={menuOpen ? "menu-open" : undefined}>
         <div className="nav">
           <a href="#top" aria-label="Kind Aura Healthcare Services home">
             <Image src="/images/logo.png" alt="Kind Aura Healthcare Services" width={290} height={332} priority />
@@ -1136,9 +1323,36 @@ function PageContent() {
           <nav>
             <a href="#about">About</a><a href="#services">Services</a><a href="#serve">Who we serve</a><a href="#faq">FAQs</a>
             <a className="btn" href="#contact">Contact us</a>
+            <button
+              type="button"
+              className="menu-btn"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <span /><span /><span />
+            </button>
           </nav>
         </div>
       </header>
+
+      {/* Full-screen mobile menu (sits outside the header so it can cover the whole screen; the header stays on top while it is open) */}
+      <div
+        id="mobile-menu"
+        className={`menu${menuOpen ? " open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Site menu"
+        aria-hidden={!menuOpen}
+      >
+        <ul>
+          {MENU_LINKS.map(([label, href], i) => (
+            <li key={href} style={{ "--i": i } as React.CSSProperties}><a href={href} onClick={closeMenu}>{label}</a></li>
+          ))}
+        </ul>
+        <a className="menu-cta" style={{ "--i": MENU_LINKS.length } as React.CSSProperties} href={site.phoneHref} onClick={closeMenu}>Call {site.phone}</a>
+      </div>
 
       <main id="top">
         <section className="hero">
@@ -1155,7 +1369,7 @@ function PageContent() {
           <div className="overlay" />
           <div className="wrap">
             <div className="content">
-              <h1>Excellence in <em>care</em>, rooted in <em>compassion.</em></h1>
+              <h1>Excellence in care, rooted in compassion.</h1>
               <p>Dependable, person-centered in-home care for children, teenagers and adults, so your loved one stays comfortable in the place they call home.</p>
               <div className="cta">
                 <a className="btn" href="#contact">Request care</a>
@@ -1185,13 +1399,16 @@ function PageContent() {
             <h2>Our services</h2>
             <p className="lead">Every care plan is shaped around the client and the family. Choose one service or combine several as needs change.</p>
             <div className="cards">
-              {services.map((s) => (
+              {visibleServices.map((s) => (
                 <div className="card" key={s.title}>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d={s.icon} /></svg>
                   <h3>{s.title}</h3>
                   <p>{s.text}</p>
                 </div>
               ))}
+            </div>
+            <div className="more">
+              <a className="btn" href="#contact">Request care</a>
             </div>
           </div>
         </section>
@@ -1219,10 +1436,10 @@ function PageContent() {
           </div>
         </section>
 
-        <section className="area">
+        <section id="where" className="area">
           <div className="wrap">
             <h2>Where we serve</h2>
-            <p className="lead">We provide in-home care across metro Atlanta and these Georgia counties.</p>
+            <p className="lead">We serve Metro Atlanta and these counties.</p>
             <ul className="chips">
               {counties.slice(0, 10).map((c, i) => (
                 <li key={c}>

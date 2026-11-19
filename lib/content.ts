@@ -13,8 +13,7 @@ export const counties = ["Barrow", "Cobb", "DeKalb", "Douglas", "Forsyth", "Fult
 export const services: { title: string; text: string; icon: string }[] = [
   { title: "Personal care", icon: "M20.8 5.6a5.2 5.2 0 00-7.4 0L12 7l-1.4-1.4a5.2 5.2 0 00-7.4 7.4L12 21.8l8.8-8.8a5.2 5.2 0 000-7.4z", text: "Respectful help with bathing, dressing, grooming, toileting, mobility and other daily routines that protect comfort and dignity." },
   { title: "Companion and sitter", icon: "M9 5a3.2 3.2 0 100 6.4A3.2 3.2 0 009 5zM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M17 6.5a2.5 2.5 0 110 5 2.5 2.5 0 010-5zM17 14c2.5 0 4.5 2 4.5 5", text: "Friendly company, conversation and encouragement that keep clients engaged, connected and cheerful through the day." },
-  { title: "Respite care", icon: "M12 3a9 9 0 100 18 9 9 0 000-18zM12 7v5l3 2", text: "Temporary relief for family caregivers, so you can rest, run errands or recharge knowing your loved one is in good hands." },
-  { title: "Transportation", icon: "M5 17H3v-5l2-5h11l3 5h2v5h-2M5 12h14M8 15a2 2 0 100 4 2 2 0 000-4zM16 15a2 2 0 100 4 2 2 0 000-4z", text: "Rides to doctor's appointments, prescription pick-up and shopping, along with light housekeeping and meal help at home." },
+
 ];
 
 export const groups: Group[] = [
