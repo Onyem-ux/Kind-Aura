@@ -5,7 +5,6 @@ import Image from "next/image";
 import { useServerInsertedHTML } from "next/navigation";
 import { StyleRegistry, createStyleRegistry } from "styled-jsx";
 import Tabs from "@/components/Tabs";
-import ContactForm from "@/components/ContactForm";
 import { counties, faqs, groups, services, site } from "@/lib/content";
 
 // Lets the <style jsx global> below render on the server (no flash of unstyled content). You don't need to edit this.
@@ -48,9 +47,9 @@ const REVEAL: [string, number, number][] = [
   [".area .lead", 0.08, 0],
   [".area .chips li", 0.14, 0.05],
   [".contact h2", 0, 0],
-  [".contact .grid > div > p", 0.08, 0],
-  [".contact address", 0.16, 0],
-  [".contact form", 0.1, 0],
+  [".contact .contact-intro p", 0.08, 0],
+  [".contact .contact-cta", 0.16, 0.1],
+  [".contact .contact-address", 0.3, 0],
   ["footer .copy", 0, 0],
 ];
 
@@ -91,6 +90,9 @@ const visibleServices = services.filter(
   (s) => !/respite|transportation/i.test(s.title)
 );
 
+// Recipient for the "Email us" button in the contact section
+const CONTACT_EMAIL = "kaurahealthcare@gmail.com";
+
 const MENU_LINKS: [string, string][] = [
   ["About", "#about"],
   ["Services", "#services"],
@@ -103,6 +105,20 @@ function PageContent() {
   useReveal();
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+
+  // "Email us": phones and tablets open their mail app through the mailto link.
+  // Desktop browsers often have no mail app set up, so mailto does nothing there;
+  // on desktop we open a Gmail compose window addressed to CONTACT_EMAIL instead.
+  const handleEmailClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+    if (isMobile) return; // let the mailto link do its normal job
+    e.preventDefault();
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CONTACT_EMAIL)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
 
   // Mobile menu: lock page scroll, close on Escape, close if the screen grows to desktop width
   useEffect(() => {
@@ -953,17 +969,12 @@ function PageContent() {
       }
 
       /* ==========================================================================
-         10. CONTACT
+         10. CONTACT  (intro text, then phone and email as side-by-side CTAs)
          ========================================================================== */
       .contact {
         background: var(--navy);
         color: #d3e8eb;
         padding: 84px 0;
-      }
-      .contact .grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 56px;
       }
       .contact h2 {
         font-family: var(--serif);
@@ -975,152 +986,73 @@ function PageContent() {
 
         margin-bottom: 16px;
       }
-      .contact .grid > div > p {
+      .contact .contact-intro {
+        text-align: center;
+        max-width: 62ch;
+        margin: 0 auto;
+      }
+      .contact .contact-intro p {
         font-family: var(--sans);
         font-size: 17px;
         font-weight: 400;
         line-height: 1.7;
         letter-spacing: normal;
         color: #d3e8eb;
-
-        max-width: 62ch;
       }
-      /* Address, phone, email */
-      .contact address {
-        font-family: var(--sans);
-        font-size: 1.1rem;
-        font-weight: 400;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: #d3e8eb;
-
-        font-style: normal;
+      /* The two CTAs sit side by side on desktop and tablet */
+      .contact .contact-ctas {
         display: grid;
-        gap: 14px;
-        margin-top: 24px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        max-width: 820px;
+        margin: 40px auto 0;
       }
-      .contact address span {
-        font-family: var(--sans);
-        font-size: 1.1rem;
-        font-weight: 400;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: #d3e8eb;
+      .contact .contact-cta {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        padding: 18px 24px;
+        border-radius: 999px;
+        background: var(--deep);
+        color: #fff;
+        text-decoration: none;
+        text-align: center;
+        transition: background .2s, transform .25s ease, box-shadow .25s ease;
       }
-      .contact address a {
+      .contact .contact-cta:hover {
+        background: #05a3b2;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px -12px rgba(0,0,0,.45);
+      }
+      .contact .contact-cta-label {
         font-family: var(--sans);
-        font-size: 1.1rem;
-        font-weight: 400;
-        line-height: 1.7;
+        font-size: .9rem;
+        font-weight: 500;
+        line-height: 1.2;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,.8);
+      }
+      .contact .contact-cta-value {
+        font-family: var(--sans);
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.3;
         letter-spacing: normal;
         color: #fff;
-
-        text-decoration: underline;
-        text-decoration-color: var(--amber);
-        text-underline-offset: 5px;
         overflow-wrap: anywhere;
       }
-      /* Form */
-      .contact form {
-        background: #fff;
-        border-radius: 20px;
-        padding: 30px;
-        display: grid;
-        gap: 14px;
-        color: var(--text);
-      }
-      .contact form label {
-        font-family: var(--sans);
-        font-size: .95rem;
-        font-weight: 600;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: var(--deep);
-
-        display: grid;
-        gap: 6px;
-      }
-      .contact form input {
-        font-family: var(--sans);
-        font-size: 17px;
-        font-weight: 400;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: #000;
-
-        padding: 12px 14px;
-        border: 1px solid #b6d1d4;
-        border-radius: 12px;
-        width: 100%;
-        background: #fff;
-      }
-      .contact form select {
-        font-family: var(--sans);
-        font-size: 17px;
-        font-weight: 400;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: #000;
-
-        padding: 12px 14px;
-        border: 1px solid #b6d1d4;
-        border-radius: 12px;
-        width: 100%;
-        background: #fff;
-      }
-      .contact form textarea {
-        font-family: var(--sans);
-        font-size: 17px;
-        font-weight: 400;
-        line-height: 1.7;
-        letter-spacing: normal;
-        color: #000;
-
-        padding: 12px 14px;
-        border: 1px solid #b6d1d4;
-        border-radius: 12px;
-        width: 100%;
-        background: #fff;
-        min-height: 110px;
-        resize: vertical;
-      }
-      /* "Send message" button */
-      .contact form .btn {
+      /* Street address under the CTAs */
+      .contact .contact-address {
+        margin-top: 28px;
+        text-align: center;
         font-family: var(--sans);
         font-size: 1rem;
-        font-weight: 600;
-        line-height: normal;
-        letter-spacing: normal;
-        color: #fff;
-
-        display: inline-block;
-        background: var(--deep);
-        text-decoration: none;
-        padding: 15px 30px;
-        border-radius: 999px;
-        border: 0;
-        cursor: pointer;
-        transition: background .2s;
-      }
-      .contact form .btn:hover {
-        background: var(--teal);
-      }
-      /* Success and error messages after sending */
-      .contact form .note {
-        font-family: var(--sans);
-        font-size: 17px;
-        font-weight: 600;
+        font-weight: 400;
         line-height: 1.7;
         letter-spacing: normal;
-        color: var(--deep);
-
-        padding: 12px 14px;
-        border-radius: 12px;
-        background: var(--mist);
-      }
-      .contact form .note.err {
-        background: #fde8e6;
-        color: #8a1f14;
+        color: #9fc0c4;
       }
       /* ==========================================================================
          11. FOOTER  (copyright line + big gradient "KIND AURA" that fades out at the bottom)
@@ -1273,10 +1205,6 @@ function PageContent() {
           grid-template-columns: 1fr;
           gap: 32px;
         }
-        .contact .grid {
-          grid-template-columns: 1fr;
-          gap: 36px;
-        }
       }
       /* Large phone: up to 760px */
       @media (max-width:760px) {
@@ -1311,6 +1239,13 @@ function PageContent() {
         .services .more .btn {
           width: 100%;
           text-align: center;
+        }
+        /* Contact CTAs stack on phones */
+        .contact .contact-ctas {
+          grid-template-columns: 1fr;
+        }
+        .contact .contact-cta {
+          border-radius: 24px;
         }
       }
       `}</style>
@@ -1423,7 +1358,7 @@ function PageContent() {
 
         <section className="family">
           <div className="wrap">
-            <Image src="/images/family.jpg" alt="Three generations of a family smiling together with an older woman" width={944} height={850} />
+            <Image src="/images/family.jpg" alt="A smiling caregiver sitting with an elderly client at home" width={944} height={850} />
             <div>
               <h2>Care that includes the whole family</h2>
               <div className="pts">
@@ -1467,17 +1402,24 @@ function PageContent() {
         </section>
 
         <section id="contact" className="contact">
-          <div className="wrap grid">
-            <div>
+          <div className="wrap">
+            <div className="contact-intro">
               <h2>Let&apos;s talk about your family&apos;s needs</h2>
               <p>Call or send a message and we will get back to you.</p>
-              <address>
-                <span>{site.address[0]}<br />{site.address[1]}</span>
-                <a href={site.phoneHref}>{site.phone}</a>
-                <a href={`mailto:${site.email}`}>{site.email}</a>
-              </address>
             </div>
-            <ContactForm />
+            <div className="contact-ctas">
+              <a className="contact-cta" href={site.phoneHref}>
+                <span className="contact-cta-label">Call us</span>
+                <span className="contact-cta-value">{site.phone}</span>
+              </a>
+              <a className="contact-cta" href={`mailto:${CONTACT_EMAIL}`} onClick={handleEmailClick}>
+                <span className="contact-cta-label">Email us</span>
+                <span className="contact-cta-value">{CONTACT_EMAIL}</span>
+              </a>
+            </div>
+            <p className="contact-address">
+              {site.address[0]}, {site.address[1]}
+            </p>
           </div>
         </section>
       </main>
